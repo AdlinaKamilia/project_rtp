@@ -13,6 +13,8 @@ import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 
+import java.io.IOException;
+
 @Component
 public class newBot extends TelegramLongPollingBot {
 
@@ -33,7 +35,11 @@ public class newBot extends TelegramLongPollingBot {
             // Handle or log the user ID as needed
             System.out.println("Received message from user ID: " + userId);
             KafkaConsumerImpl userC = new KafkaConsumerImpl();
-
+            try {
+                userC.userSendMessage(message);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
             // Rest of your logic here...
         }
     }

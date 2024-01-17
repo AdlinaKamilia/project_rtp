@@ -1,10 +1,13 @@
 package com.project_rtp.project_rtp.Producer;
 
+import com.project_rtp.project_rtp.Consumer.KafkaConsumerImpl;
 import org.springframework.scheduling.annotation.Async;
 import com.google.gson.Gson;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.io.BufferedReader;
@@ -13,10 +16,6 @@ import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
 
 @RestController
@@ -105,6 +104,9 @@ public class KafkaMessageController {
             }
 
             int rank = 1;
+
+            //simpan user array
+            LinkedList userCommentCounts = new LinkedList<>();
             for (Map.Entry<String, Integer> entry : commentCountMap.entrySet()) {
                 String userLogin = entry.getKey();
                 int commentCount = entry.getValue();
@@ -116,6 +118,11 @@ public class KafkaMessageController {
                 System.out.println(message);
 
                 kafkaProducerUserComments.sendMessage(message);
+                if(userAvailable){
+                    KafkaConsumerImpl toConsume = new KafkaConsumerImpl();
+                    toConsume.sendMessageToTelegram(message);
+                }
+                userAvailable= false;
 
                 /*// Alternatively, send to Kafka:
                 ProducerRecord<String, String> record = new ProducerRecord<>("userCommentsCount", message);
@@ -124,6 +131,11 @@ public class KafkaMessageController {
                 rank++;
             }
         }
+    }
+    public void getDataFromGithubToTelegram() throws IOException {
+        userAvailable=true;
+        getGithubData();
+        System.out.println("hi1");
     }
     public void setUserAvailable(){
         userAvailable=false;
