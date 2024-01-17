@@ -8,11 +8,11 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 
 @SpringBootApplication
-public class ProjectRtpApplication {
+public class ProjectTelegramApplication {
 
 	public static void main(String[] args) throws TelegramApiException {
 
-		SpringApplication.run(ProjectRtpApplication.class, args);
+		SpringApplication.run(ProjectTelegramApplication.class, args);
 		TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
 		newBot bot = new newBot();
 		botsApi.registerBot(bot);

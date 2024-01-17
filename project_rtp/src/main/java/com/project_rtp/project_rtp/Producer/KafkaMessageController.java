@@ -1,6 +1,7 @@
 package com.project_rtp.project_rtp.Producer;
 
 import com.project_rtp.project_rtp.Consumer.KafkaConsumerImpl;
+import com.project_rtp.project_rtp.telegramBot.newBot;
 import org.springframework.scheduling.annotation.Async;
 import com.google.gson.Gson;
 import jakarta.annotation.PostConstruct;
@@ -23,7 +24,8 @@ public class KafkaMessageController {
 
     private final Object lockObject = new Object();
     boolean userAvailable = false;
-
+    //simpan user array
+    LinkedList userCommentCounts = new LinkedList<>();
 
     @Autowired
     private KafkaProducerUserComments kafkaProducerUserComments;
@@ -105,8 +107,7 @@ public class KafkaMessageController {
 
             int rank = 1;
 
-            //simpan user array
-            LinkedList userCommentCounts = new LinkedList<>();
+
             for (Map.Entry<String, Integer> entry : commentCountMap.entrySet()) {
                 String userLogin = entry.getKey();
                 int commentCount = entry.getValue();
@@ -115,14 +116,14 @@ public class KafkaMessageController {
                 String message = createMessage(rank,userLogin, commentCount);
 
                 // Send the message to Kafka or perform other actions
-                System.out.println(message);
-
-                kafkaProducerUserComments.sendMessage(message);
-                if(userAvailable){
-                    KafkaConsumerImpl toConsume = new KafkaConsumerImpl();
-                    toConsume.sendMessageToTelegram(message);
+                //System.out.println(message);
+                if (kafkaProducerUserComments != null) {
+                    kafkaProducerUserComments.sendMessage(message);
+                } else {
+                    userCommentCounts.add(message);
                 }
-                userAvailable= false;
+                //kafkaProducerUserComments.sendMessage(message);
+
 
                 /*// Alternatively, send to Kafka:
                 ProducerRecord<String, String> record = new ProducerRecord<>("userCommentsCount", message);
@@ -130,14 +131,18 @@ public class KafkaMessageController {
 
                 rank++;
             }
+            if(userAvailable){
+                /*KafkaConsumerImpl sendGD= new KafkaConsumerImpl();
+                sendGD.setList(userCommentCounts);*/
+                newBot bot = new newBot();
+                bot.sendToTelegram(userCommentCounts);
+            }
+
         }
     }
     public void getDataFromGithubToTelegram() throws IOException {
         userAvailable=true;
-        getGithubData();
+        fetchDataAsync();
         System.out.println("hi1");
-    }
-    public void setUserAvailable(){
-        userAvailable=false;
     }
 }
