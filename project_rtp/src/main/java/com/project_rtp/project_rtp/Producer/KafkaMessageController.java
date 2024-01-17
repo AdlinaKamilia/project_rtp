@@ -23,6 +23,7 @@ import java.util.Set;
 public class KafkaMessageController {
 
     private final Object lockObject = new Object();
+    boolean userAvailable = false;
 
 
     @Autowired
@@ -123,5 +124,8 @@ public class KafkaMessageController {
                 rank++;
             }
         }
+    }
+    public void setUserAvailable(){
+        userAvailable=false;
     }
 }
