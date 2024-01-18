@@ -1,6 +1,7 @@
 package com.project_rtp.project_rtp.Producer;
 
 import com.google.gson.Gson;
+import com.project_rtp.project_rtp.telegramBot.TelegramBot;
 import jakarta.annotation.PostConstruct;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,10 +14,7 @@ import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -26,7 +24,8 @@ public class KafkaMessageController2 {
 
     private final Object lockObject = new Object();
 
-
+    boolean userAvailable = false; // user send some message
+    LinkedList wordsCount = new LinkedList<>(); // list of content
     @Autowired
     private KafkaProducerWordsCount kafkaProducerWordsCount;
     @PostConstruct
@@ -50,12 +49,13 @@ public class KafkaMessageController2 {
             }
         });
     }
-
+    //formatting message to put into list
     private static String createMessage(int rank, String userLogin, int commentsC) {
         return rank + ". " + userLogin + " [" + commentsC + " comments]";
     }
+    //fetching the data from GitHub
     private void getGithubData() throws IOException {
-        // GitHub API URL
+        // Get GitHub issues using RestAPI
         String apiUrl = "https://api.github.com/repos/AdlinaKamilia/Project_STIW3044/issues/comments";
         Gson gson = new Gson();
         URL url = new URL(apiUrl);
@@ -79,11 +79,8 @@ public class KafkaMessageController2 {
             }
             reader.close();
 
-            // Parse the JSON response here
             String jsonResponse = response.toString();
-            // Process the JSON data
             IssueComment[] comments = gson.fromJson(jsonResponse, (Type) IssueComment[].class);
-
             // Map to store the count of words in comments
             Map<String, Integer> wordCountMap = new HashMap<>();
 
@@ -103,19 +100,30 @@ public class KafkaMessageController2 {
 
             int rank = 1;
             for (Map.Entry<String, Integer> entry : wordCountMap.entrySet()) {
-
                 String word = entry.getKey();
                 int commentCount = entry.getValue();
 
-                // Create the message using the format from the `createMessage` method
+                // Create the message using the format
                 String message = createMessage(rank,word, commentCount);
 
                 // Send the message to Kafka or perform other actions
-                System.out.println(message);
-
-                kafkaProducerWordsCount.sendMessage(message);
+                if (kafkaProducerWordsCount != null) {
+                    kafkaProducerWordsCount.sendMessage(message);
+                } else if (userAvailable) {
+                    wordsCount.add(message);
+                }
                 rank++;
             }
+            // send to Telegram
+            if(userAvailable){
+                TelegramBot bot = new TelegramBot();
+                TelegramBot.sendToTelegram(wordsCount);
+            }
         }
+    }
+    //fetch data and prompt to Telegram
+    public void getDataFromGithubToTelegram() throws IOException {
+        userAvailable=true;
+        fetchDataAsync();
     }
 }

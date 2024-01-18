@@ -1,6 +1,6 @@
 package com.project_rtp.project_rtp;
 
-import com.project_rtp.project_rtp.telegramBot.newBot;
+import com.project_rtp.project_rtp.telegramBot.TelegramBot;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
@@ -12,9 +12,9 @@ public class ProjectRtpApplication {
 
 	public static void main(String[] args) throws TelegramApiException {
 
-		SpringApplication.run(ProjectRtpApplication.class, args);
-		TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
-		newBot bot = new newBot();
+		SpringApplication.run(ProjectRtpApplication.class, args); //start the springboot
+		TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class); //start the telegram bot
+		TelegramBot bot = new TelegramBot();
 		botsApi.registerBot(bot);
 
 	}

@@ -1,13 +1,11 @@
 package com.project_rtp.project_rtp.Producer;
 
-import com.project_rtp.project_rtp.Consumer.KafkaConsumerImpl;
-import com.project_rtp.project_rtp.telegramBot.newBot;
+import com.project_rtp.project_rtp.telegramBot.TelegramBot;
 import org.springframework.scheduling.annotation.Async;
 import com.google.gson.Gson;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;
-
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -22,21 +20,13 @@ import java.net.URL;
 @RestController
 public class KafkaMessageController {
 
-    private final Object lockObject = new Object();
-    boolean userAvailable = false;
-    //simpan user array
-    LinkedList userCommentCounts = new LinkedList<>();
+    private final Object lockObject = new Object(); //for locking synchronization
+    boolean userAvailable = false; // user send some message
+    LinkedList userCommentCounts = new LinkedList<>(); // list of content
 
     @Autowired
     private KafkaProducerUserComments kafkaProducerUserComments;
 
-    /*@PostMapping("/publish/{animalName}")
-    public String publishMessage(@PathVariable("animalName")final String animalName)
-    {
-        kafkaProducerImpl.sendMessage(animalName);
-        System.out.println("Successfully Published the Animal Name = '" + animalName + "' to the AnimalTopic");
-        return "Successfully Published the Animal Name = " + animalName + " to the AnimalTopic";
-    }*/
     @PostConstruct
     public void init() {
         fetchDataAsync();
@@ -52,20 +42,23 @@ public class KafkaMessageController {
                     getGithubData();
                 }
             } catch (IOException e) {
-                e.printStackTrace();  // Handle the exception appropriately in your application
+                e.printStackTrace();
             } finally {
-                executorService.shutdown();  // Shutdown the executor when the task is completed
+                executorService.shutdown();
             }
         });
     }
 
+    //formatting message to put into list
     private static String createMessage(int rank, String userLogin, int commentsC) {
         return rank + ". " + userLogin + " [" + commentsC + " comments]";
     }
+
+    //fetching the data from GitHub
     private void getGithubData() throws IOException {
-        // Create a persistent record of processed user IDs
+        // Information of userId
         Set<String> processedUserIds = new HashSet<>();
-        // GitHub API URL
+        // Get GitHub issues using RestAPI
         String apiUrl = "https://api.github.com/repos/AdlinaKamilia/Project_STIW3044/issues/comments";
         Gson gson = new Gson();
         URL url = new URL(apiUrl);
@@ -89,18 +82,17 @@ public class KafkaMessageController {
             }
             reader.close();
 
-            // Parse the JSON response here
             String jsonResponse = response.toString();
-            // Process the JSON data
             IssueComment[] comments = gson.fromJson(jsonResponse, (Type) IssueComment[].class);
             // Map to store the count of comments for each user
             Map<String, Integer> commentCountMap = new HashMap<>();
 
             for (IssueComment comment : comments) {
                 String userLogin = comment.getUser().getLogin();
-                //String body = comment.getBody();
+                //check whether the user comments are already in list
                 if (!processedUserIds.contains(userLogin)) {
-                    processedUserIds.add(userLogin);}
+                    processedUserIds.add(userLogin);
+                }
                 // Update the comment count for the user
                 commentCountMap.put(userLogin, commentCountMap.getOrDefault(userLogin, 0) + 1);
             }
@@ -112,37 +104,28 @@ public class KafkaMessageController {
                 String userLogin = entry.getKey();
                 int commentCount = entry.getValue();
 
-                // Create the message using the format from the `createMessage` method
+                // Create the message using the format
                 String message = createMessage(rank,userLogin, commentCount);
 
                 // Send the message to Kafka or perform other actions
-                //System.out.println(message);
                 if (kafkaProducerUserComments != null) {
                     kafkaProducerUserComments.sendMessage(message);
-                } else {
+                } else if (userAvailable) {
                     userCommentCounts.add(message);
                 }
-                //kafkaProducerUserComments.sendMessage(message);
-
-
-                /*// Alternatively, send to Kafka:
-                ProducerRecord<String, String> record = new ProducerRecord<>("userCommentsCount", message);
-                producer.send(record);*/
-
                 rank++;
             }
+            // send to Telegram
             if(userAvailable){
-                /*KafkaConsumerImpl sendGD= new KafkaConsumerImpl();
-                sendGD.setList(userCommentCounts);*/
-                newBot bot = new newBot();
-                bot.sendToTelegram(userCommentCounts);
+                TelegramBot bot = new TelegramBot();
+                TelegramBot.sendToTelegram(userCommentCounts);
             }
-
         }
     }
+
+    //fetch data and prompt to Telegram
     public void getDataFromGithubToTelegram() throws IOException {
         userAvailable=true;
         fetchDataAsync();
-        System.out.println("hi1");
     }
 }

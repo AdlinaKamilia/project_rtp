@@ -15,6 +15,10 @@ import org.springframework.kafka.core.ProducerFactory;
 public class KafkaProducerConfig
 {
     @Bean
+    public KafkaProducerUserComments kafkaProducerUserComments() {
+        return new KafkaProducerUserComments();
+    }
+    @Bean
     public ProducerFactory<String, String> producerFactory()
     {
         Map<String, Object> configProps = new HashMap<>();

@@ -3,15 +3,7 @@ package com.project_rtp.project_rtp.Producer;
 public class User {
     private String login;
     private long id;
-    // ... other fields (excluding those you don't need)
-
-    // Getters and setters for the fields
-
-    public String getLogin() {
+        public String getLogin() {
         return login;
-    }
-
-    public long getId() {
-        return id;
     }
 }

@@ -11,6 +11,7 @@ public class KafkaProducerUserComments {
     private KafkaTemplate<String, String> kafkaTemplate;
     private final static String TOPIC_NAME = "userCommentsCount";
 
+    //send message to Kafka
     public void sendMessage(String message)
     {
         kafkaTemplate.send(TOPIC_NAME, message);
