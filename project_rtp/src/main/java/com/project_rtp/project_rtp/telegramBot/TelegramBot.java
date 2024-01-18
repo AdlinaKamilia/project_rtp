@@ -126,7 +126,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                                     userCList.clear();
                                     wordsCList.clear();
                                 }
-                                sendText(userO, "Process Finished. For another fetch of data, please use this command again \"/input\".");
+                                sendText(userO, "Process Finished. \nFor another fetch of data, please use this command again \"/input\".\nTo end the conversation please use this command \"/end\".");
                                 inputRequested= false;
 
                             } catch (InterruptedException e) {

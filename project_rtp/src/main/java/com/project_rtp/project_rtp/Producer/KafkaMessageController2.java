@@ -1,9 +1,7 @@
 package com.project_rtp.project_rtp.Producer;
 
 import com.google.gson.Gson;
-import com.project_rtp.project_rtp.telegramBot.TelegramBot;
 import jakarta.annotation.PostConstruct;
-import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.bind.annotation.RestController;
@@ -24,8 +22,6 @@ public class KafkaMessageController2 {
 
     private final Object lockObject = new Object();
 
-    boolean userAvailable = false; // user send some message
-    LinkedList wordsCount = new LinkedList<>(); // list of content
     @Autowired
     private KafkaProducerWordsCount kafkaProducerWordsCount;
     @PostConstruct
@@ -109,21 +105,10 @@ public class KafkaMessageController2 {
                 // Send the message to Kafka or perform other actions
                 if (kafkaProducerWordsCount != null) {
                     kafkaProducerWordsCount.sendMessage(message);
-                } else if (userAvailable) {
-                    wordsCount.add(message);
                 }
                 rank++;
             }
-            // send to Telegram
-            if(userAvailable){
-                TelegramBot bot = new TelegramBot();
-                TelegramBot.sendToTelegram(wordsCount);
-            }
+
         }
-    }
-    //fetch data and prompt to Telegram
-    public void getDataFromGithubToTelegram() throws IOException {
-        userAvailable=true;
-        fetchDataAsync();
     }
 }

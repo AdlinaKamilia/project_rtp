@@ -20,11 +20,6 @@ public class KafkaConsumerImpl
         list.add(message);
     }
 
-    //prompt to get data from GitHub
-    public void userSendMessage(Message msg) throws IOException {
-        KafkaMessageController getData = new KafkaMessageController();
-        getData.getDataFromGithubToTelegram();
-    }
     public LinkedList getList(){
         return  list;
     }

@@ -1,6 +1,4 @@
 package com.project_rtp.project_rtp.Producer;
-
-import com.project_rtp.project_rtp.telegramBot.TelegramBot;
 import org.springframework.scheduling.annotation.Async;
 import com.google.gson.Gson;
 import jakarta.annotation.PostConstruct;
@@ -21,9 +19,6 @@ import java.net.URL;
 public class KafkaMessageController {
 
     private final Object lockObject = new Object(); //for locking synchronization
-    boolean userAvailable = false; // user send some message
-    LinkedList userCommentCounts = new LinkedList<>(); // list of content
-
     @Autowired
     private KafkaProducerUserComments kafkaProducerUserComments;
 
@@ -110,22 +105,10 @@ public class KafkaMessageController {
                 // Send the message to Kafka or perform other actions
                 if (kafkaProducerUserComments != null) {
                     kafkaProducerUserComments.sendMessage(message);
-                } else if (userAvailable) {
-                    userCommentCounts.add(message);
                 }
                 rank++;
             }
-            // send to Telegram
-            if(userAvailable){
-                TelegramBot bot = new TelegramBot();
-                TelegramBot.sendToTelegram(userCommentCounts);
-            }
-        }
-    }
 
-    //fetch data and prompt to Telegram
-    public void getDataFromGithubToTelegram() throws IOException {
-        userAvailable=true;
-        fetchDataAsync();
+        }
     }
 }
