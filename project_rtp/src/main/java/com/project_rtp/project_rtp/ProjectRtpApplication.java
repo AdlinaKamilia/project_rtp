@@ -12,7 +12,7 @@ public class ProjectRtpApplication {
 
 	public static void main(String[] args) throws TelegramApiException {
 
-		SpringApplication.run(ProjectRtpApplication.class, args); //start the springboot
+		//SpringApplication.run(ProjectRtpApplication.class, args); //start the springboot
 		TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class); //start the telegram bot
 		TelegramBot bot = new TelegramBot();
 		botsApi.registerBot(bot);

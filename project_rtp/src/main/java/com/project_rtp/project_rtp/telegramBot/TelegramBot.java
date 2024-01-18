@@ -1,7 +1,11 @@
+
 package com.project_rtp.project_rtp.telegramBot;
 
 import com.project_rtp.project_rtp.Consumer.KafkaConsumerImpl;
 import com.project_rtp.project_rtp.Consumer.KafkaConsumerImpl2;
+import com.project_rtp.project_rtp.ProjectRtpApplication;
+import org.springframework.boot.SpringApplication;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
@@ -40,6 +44,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             if (userText.equals("/start")) {
                 sendText(message.getChatId(), "Welcome to pixelpuff bot!\nAvailable commands:\n1. /input - To input your request\n2. /end - To terminate the conversation");
             } else if (userText.equals("/end")) {
+
                 if(processingThread!=null&&userO.equals(userId)){
                     handleEndCommand(userId);
                 }else {
@@ -63,56 +68,79 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             } else if (inputRequested) {
                 if (userO.equals(userId)) {
-                    lastActivityTime= System.currentTimeMillis();
 
-                    KafkaConsumerImpl userC = new KafkaConsumerImpl();
-                    KafkaConsumerImpl2 wordsC = new KafkaConsumerImpl2();
-                    try {
-                        if(userText.equals("1")){
-                            userC.userSendMessage(message);
-                            Thread.sleep(500);
-                            sendText(userId, "Fetching the Data From Github");
-                            Thread.sleep(2000);
-                            outputMessage.append(String.format("%20s\n","User's comments count"));
-                            outputMessage.append(format);
-                            outputMessage.append("```");
-                            sendText(userId, outputMessage.toString());
-                        }else if (userText.equals("2")) {
-                            wordsC.userSendMessage(message);
-                            Thread.sleep(500);
-                            sendText(userId, "Fetching the Data From Github");
-                            Thread.sleep(2000);
-                            outputMessage.append(String.format("%10s\n","Words count"));
-                            outputMessage.append(format);
-                            outputMessage.append("```");
-                            sendText(userId, outputMessage.toString());
-                        }else if(userText.equals("3")){
-                            userC.userSendMessage(message);
-                            Thread.sleep(500);
-                            sendText(userId, "Fetching the Data From Github");
-                            Thread.sleep(2000);
-                            outputMessage.append(String.format("%20s\n","User's comments count"));
-                            outputMessage.append(format);
-                            outputMessage.append("```");
-                            sendText(userId, outputMessage.toString());
-                            Thread.sleep(2000);
-                            outputMessage= new StringBuilder();
-                            outputMessage.append("```\n");
-                            outputMessage.append(String.format("%10s\n","Words count"));
-                            wordsC.userSendMessage(message);
-                            Thread.sleep(2000);
-                            outputMessage.append(format);
-                            outputMessage.append("```");
-                            sendText(userId, outputMessage.toString());
+                    synchronized (lock) {
+                        lastActivityTime= System.currentTimeMillis();
+                        if(userText.equals("1")||userText.equals("2")||userText.equals("3")){
+                            KafkaConsumerImpl userC = new KafkaConsumerImpl();
+                            KafkaConsumerImpl2 wordsC = new KafkaConsumerImpl2();
+                            ConfigurableApplicationContext context = SpringApplication.run(ProjectRtpApplication.class);
+                            try {
+                                Thread.sleep(1000);
+                            } catch (InterruptedException e) {
+                                throw new RuntimeException(e);
+                            }
+                            try {
+                                if(userText.equals("1")){
+                                    LinkedList userCList = userC.getList();
+                                    sendToTelegram(userCList);
+                                    sendText(userId, "Fetching the Data From Github");
+                                    Thread.sleep(2000);
+                                    outputMessage.append(String.format("%20s\n","User's comments count"));
+                                    outputMessage.append(format);
+                                    outputMessage.append("```");
+                                    sendText(userId, outputMessage.toString());
+                                    SpringApplication.exit(context);
+                                    userCList.clear();
+                                }else if (userText.equals("2")) {
+                                    LinkedList wordsCList = wordsC.getList();
+                                    sendToTelegram(wordsCList);
+                                    sendText(userId, "Fetching the Data From Github");
+                                    Thread.sleep(2000);
+                                    outputMessage.append(String.format("%10s\n","Words count"));
+                                    outputMessage.append(format);
+                                    outputMessage.append("```");
+                                    sendText(userId, outputMessage.toString());
+                                    SpringApplication.exit(context);
+                                    wordsCList.clear();
+                                }else if(userText.equals("3")){
+                                    LinkedList userCList = userC.getList();
+                                    sendToTelegram(userCList);
+                                    sendText(userId, "Fetching the Data From Github");
+                                    Thread.sleep(2000);
+                                    outputMessage.append(String.format("%20s\n","User's comments count"));
+                                    outputMessage.append(format);
+                                    outputMessage.append("```");
+                                    sendText(userId, outputMessage.toString());
+                                    Thread.sleep(2000);
+                                    outputMessage= new StringBuilder();
+                                    outputMessage.append("```\n");
+                                    outputMessage.append(String.format("%10s\n","Words count"));
+                                    LinkedList wordsCList = wordsC.getList();
+                                    sendToTelegram(wordsCList);
+                                    Thread.sleep(2000);
+                                    outputMessage.append(format);
+                                    outputMessage.append("```");
+                                    sendText(userId, outputMessage.toString());
+                                    SpringApplication.exit(context);
+                                    userCList.clear();
+                                    wordsCList.clear();
+                                }
+                                sendText(userO, "Process Finished. For another fetch of data, please use this command again \"/input\".");
+                                inputRequested= false;
 
+                            } catch (InterruptedException e) {
+                                throw new RuntimeException(e);
+                            }
                         }else {
                             // Invalid input after /input, display error message
                             sendText(userO, "Invalid request. Please input 1, 2, or 3 only.");
                         }
 
-                    } catch (IOException | InterruptedException e) {
-                        throw new RuntimeException(e);
+
                     }
+
+
                 }
             } else {
                 // Invalid input before /input, display error message
